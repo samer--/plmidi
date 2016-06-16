@@ -22,5 +22,5 @@ install-me:
 	swipl -f none -g "pack_install(.,[upgrade(true)]), halt"
 
 publish:
-	swipl -f none -g "pack_property(plmidi,download(D)), pack_install(D), halt"
+	swipl -f none -g "pack_property(plmidi,download(D)), pack_install(D,[upgrade(true),interactive(false)]), halt"
  
