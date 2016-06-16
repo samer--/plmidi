@@ -20,4 +20,7 @@ distclean: clean
 
 install-me:
 	swipl -f none -g "pack_install(.,[upgrade(true)]), halt"
+
+publish:
+	swipl -f none -g "pack_property(plmidi,download(D)), pack_install(D), halt"
  
