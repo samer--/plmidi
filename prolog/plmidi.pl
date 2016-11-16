@@ -188,7 +188,7 @@ midi_connect(Id) :-
 midi_connect_named(String) :-
    findall(ID-Name, (midi_endpoint(outlet(ID,Name,_,_)), sub_atom(Name,_,_,_,String)), Matches),
    ( Matches = [] -> throw(named_midi_outlet_not_found(String))
-   ; Matches = [ID-Name] -> format('% Connecting to MIDI outlet ~w',[Name]), midi_connect(ID)
+   ; Matches = [ID-Name] -> format('% Connecting to MIDI outlet ~w.\n',[Name]), midi_connect(ID)
    ; throw(named_midi_outlet_not_unique(String,Matches))
    ).
 
