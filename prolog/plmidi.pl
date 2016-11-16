@@ -16,6 +16,7 @@
 	,	midi_calibrate/0
 
 	,	midi_connect/1
+   ,  midi_connect_named/1
 	,	midinote/4
 	,	midinote_at/5
 	,	midievent_at/2
@@ -171,7 +172,6 @@ midi(T,E) :- midi_outlet(_,O), midi(O,T,E).
 %  just incase. 
 
 
-
 %% midi_connect( +N:natural) is semidet.
 %
 %  Connect to MIDI device identified by index N (starting from 1).
@@ -182,6 +182,15 @@ midi_connect(Id) :-
 	retractall(midi_outlet(_,_)),
 	assert(midi_outlet(Id,Outlet)).
 
+%% midi_connect_named(+String:atom) is det.
+%  Connect to a MIDI output which contains String as part of its name.
+%  Can throw =|named_midi_outlet_not_found(_)|= or =|named_midi_outlet_not_unique(_,_)|=.
+midi_connect_named(String) :-
+   findall(ID-Name, (midi_endpoint(outlet(ID,Name,_,_)), sub_atom(Name,_,_,_,String)), Matches),
+   ( Matches = [] -> throw(named_midi_outlet_not_found(String))
+   ; Matches = [ID-Name] -> format('% Connecting to MIDI outlet ~w',[Name]), midi_connect(ID)
+   ; throw(named_midi_outlet_not_unique(String,Matches))
+   ).
 
 %% midinote(+Ch:integer, +NN:integer, +Vel:integer, +Dur:nonneg) is det.
 %
