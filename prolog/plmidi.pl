@@ -7,8 +7,6 @@
 		midi_mk_outlet/2		% +N:natural, -Ref
 	,	midi_mk_inlet/3		% +N:natural, -Ref, +Handler
 	,	midi_is_conn/1			% +Ref
-	,	midi_send/4				% +Ref, +Msg:between(0,255), +Arg1:between(0,127), +Arg2:between(0,127)
-	,	midi_send/5				% +Ref, +Msg:between(0,255), +Arg1:between(0,127), +Arg2:between(0,127), +Time:float
 	,	midi/3     				% +Ref, +Time:float, +Event
 	,	midi/2     				% +Time:float, +Event
 	,	midi_endpoints/1	
@@ -19,7 +17,6 @@
    ,  midi_connect_named/1
 	,	midinote/4
 	,	midinote_at/5
-	,	midievent_at/2
 	,	midi_outlet/2
 	]).
 	
@@ -204,8 +201,4 @@ midinote(Ch,NN,Vel,Dur) :-
 midinote_at(T,Ch,NN,Vel,Dur) :-
 	midi_outlet(_,M), 
 	midi(M,T,note(Ch,NN,Vel,Dur)).
-
-midievent_at(T,Ev) :-
-	midi_outlet(_,M),
-	midi(M,T,Ev).
 
