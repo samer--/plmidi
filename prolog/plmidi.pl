@@ -37,6 +37,7 @@ by get_time/1.
 */
 
 :-	use_foreign_library(foreign(plmidi)).
+:- use_module(library(mididcg)).
 
 %% midi_endpoints( -L:list(endpoint)) is det.
 %
@@ -88,17 +89,6 @@ midi_endpoint(E) :- midi_endpoints(L), member(E,L).
 %  Determines whether or not Ref is a MIDI connection BLOB as returned
 %  by midi_mk_outlet/2 or midi_mk_inlet/3.
 
-%% midi_send(+Ref, +Msg:between(0,255), +Arg1:between(0,127), +Arg2:between(0,127), +Time:float) is det.
-%% midi_send(+Ref, +Msg:between(0,255), +Arg1:between(0,127), +Arg2:between(0,127)) is det.
-%
-%  Send a MIDI message to an established destination, with a timestamp
-%  of <now> (midi_send/4) or a given time (midi_send/5).
-%  or at the specified time. 
-%
-%  @param Ref is an atom as returned by midi_mk_outlet/2.
-%  @param Time is a Unix time as returnd by get_time/1.
-midi_send(O,M,A1,A2) :- M1 is M, B1 is A1, B2 is A2, midi_send_now(O,M1,B1,B2).
-midi_send(O,M,A1,A2,T) :- T1 is float(T), M1 is M, B1 is A1, B2 is A2, midi_send_at(O,M1,B1,B2,T1).
 
 
 
@@ -124,37 +114,13 @@ midi_send(O,M,A1,A2,T) :- T1 is float(T), M1 is M, B1 is A1, B2 is A2, midi_send
 %    * pan(+Chan:between(0,15),+Pan:between(0,127))
 %    Pan controller on given channel (MSB only).
 
-midi(O,T,msg(A,B,C)) :- midi_send(O,A,B,C,T).
-midi(O,T,noteon(Ch,NN,V)) :- midi_send(O,144+Ch,NN,V,T).
-midi(O,T,noteoff(Ch,NN)) :- midi_send(O,128+Ch,NN,0,T).
-
-midi(O,T,note(Ch,NN,Vel,Dur)) :- 
-	N1 is NN, V1 is Vel,
-	midi_send(O,144+Ch,N1,V1,T),
-	midi_send(O,128+Ch,N1,0,T+Dur).
-
-midi(O,T,prog(Ch,Prog)) :-
-	midi_send(O,192+Ch,Prog,Prog,T).
-	
-midi(O,T,prog(Ch,Prog,Bank)) :-
-	MSB is Bank // 128,
-	LSB is Bank mod 128,
-	midi_send(O,176+Ch,0,MSB,T),
-	midi_send(O,176+Ch,32,LSB,T),
-	midi(O,T,prog(Ch,Prog)).
-
-midi(O,T,prog(Ch,Prog,MSB,LSB)) :-
-	midi_send(O,176+Ch,0,MSB,T),
-	midi_send(O,176+Ch,32,LSB,T),
-	midi(O,T,prog(Ch,Prog)).
-
-midi(O,T,pan(Ch,Pan)) :-
-	midi_send(O,176+Ch,10,Pan,T).
-
-midi(O,T,volume(Ch,Vol)) :-
-	midi_send(O,176+Ch,7,Vol,T).
-
 midi(T,E) :- midi_outlet(_,O), midi(O,T,E).
+midi(O,T,Ev) :- 
+   once(call(mididcg:Ev, T-Msgs, _-[])),
+   maplist(midi_send(O),Msgs).
+
+midi_send(O,msg(M,A1,A2))   :- M1 is M, B1 is A1, B2 is A2, midi_send_now(O,M1,B1,B2).
+midi_send(O,msg(T,M,A1,A2)) :- T1 is float(T), M1 is M, B1 is A1, B2 is A2, midi_send_at(O,M1,B1,B2,T1).
 
 %% midi_calibrate is det.
 %
