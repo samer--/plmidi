@@ -264,7 +264,7 @@ void plmidi_read(const MIDIPacketList *pktlist, void *portData, void *srcData)
 		PL_recorded((record_t)srcData,goal); // retrieve the goal term
 		{ // most of this was cribbed from RtMidi C++ package
 			const MIDIPacket *packet = &pktlist->packet[0];
-			unsigned int  i;
+			unsigned int  i, rc;
 
 			for (i=0; i<pktlist->numPackets; ++i ) {
 				const unsigned char *pdata=packet->data;
@@ -285,11 +285,11 @@ void plmidi_read(const MIDIPacketList *pktlist, void *portData, void *srcData)
 						term_t term2 = term0+2;
 						int i;
 
-						for (i=0; i<size; i++) PL_put_integer(data0+i,pdata[iByte+i]);
+						for (i=0; i<size; i++) rc=PL_put_integer(data0+i,pdata[iByte+i]);
 
 						PL_put_term(term0,goal); 
-						PL_put_float(term1,time);
-						PL_cons_functor_v(term2,f_midi[size-1],data0);
+						rc=PL_put_float(term1,time);
+						rc=PL_cons_functor_v(term2,f_midi[size-1],data0);
 
 						// data is from pdata[iByte] to pdata[iByte+size]
 						PL_call_predicate(NULL,PL_Q_NORMAL,call3,term0);
@@ -375,10 +375,14 @@ static int send_msg(
 
 	pktlist.numPackets = 1;
 	pkt->timeStamp = ts;
-	pkt->length = 3;
 	pkt->data[0] = msg;
 	pkt->data[1] = arg1;
-	pkt->data[2] = arg2;
+	if (arg2==255) {
+		pkt->length = 2;
+	} else {
+		pkt->length = 3;
+		pkt->data[2] = arg2;
+	}
 
 	MIDISend(outlet->port, outlet->endpt, &pktlist);
 	return TRUE;

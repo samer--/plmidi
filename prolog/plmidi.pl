@@ -95,31 +95,21 @@ midi_endpoint(E) :- midi_endpoints(L), member(E,L).
 %% midi(+Ref, +Time:float, +Event) is semidet.
 %
 %  Schedule a MIDI event, possibly consisting of multiple messages, determined
-%  by the Event term.
+%  by the Event term, which must be a callable predicate in library(mididcg).
 %
 %  @param Ref is an atom as returned by midi_mk_outlet/2.
 %  @param Time is a Unix time as returnd by get_time/1.
 %  @param Event is a term describing an event, and is one of:
-%  
-%    * noteon(+Chan:between(0,15),+NoteNum:between(0,127),+Vel:between(0,127))
-%    A note-on event with the given channel, pitch (NoteNum) and loudness (Vel).
-%    * noteoff(+Chan:between(0,15),+NoteNum:between(0,127))
-%    A note-off event with the given channel and pitch (NoteNum).
-%    * note(+Chan:between(0,15),+NoteNum:between(0,127),+Vel:between(0,127),+Dur:float)
-%    A complete note event (on and off) with the given duration.
-%    * prog(+Chan:between(0,15),+Prog:between(0,127))
-%    Programme change event in the given channel.
-%    * prog(+Chan:between(0,15),+Prog:between(0,127),+Bank:between(0,16383))
-%    Combined programme and bank change event in the given channel.
-%    * pan(+Chan:between(0,15),+Pan:between(0,127))
-%    Pan controller on given channel (MSB only).
 
 midi(T,E) :- midi_outlet(_,O), midi(O,T,E).
 midi(O,T,Ev) :- 
    once(call(mididcg:Ev, T-Msgs, _-[])),
    maplist(midi_send(O),Msgs).
 
-midi_send(O,msg(M,A1,A2))   :- M1 is M, B1 is A1, B2 is A2, midi_send_now(O,M1,B1,B2).
+% disable immediate messages!
+% midi_send(O,imsg(M,A1))      :- M1 is M, B1 is A1, midi_send_now(O,M1,B1,255).
+% midi_send(O,imsg(M,A1,A2))   :- M1 is M, B1 is A1, B2 is A2, midi_send_now(O,M1,B1,B2).
+midi_send(O,msg(T,M,A1))    :- T1 is float(T), M1 is M, B1 is A1, midi_send_at(O,M1,B1,255,T1).
 midi_send(O,msg(T,M,A1,A2)) :- T1 is float(T), M1 is M, B1 is A1, B2 is A2, midi_send_at(O,M1,B1,B2,T1).
 
 %% midi_calibrate is det.
@@ -132,7 +122,7 @@ midi_send(O,msg(T,M,A1,A2)) :- T1 is float(T), M1 is M, B1 is A1, B2 is A2, midi
 %  is loaded, the calibration is done, and an IOKit wake/sleep event handler 
 %  is installed. This should recalibrate the timer whenever the system
 %  is awoken from sleep, but midi_calibrate/0 can be called at any time
-%  just incase. 
+%  just in case. 
 
 
 %% midi_connect( +N:natural) is semidet.
